@@ -2,6 +2,7 @@ var assert = require('assert');
 
 var rpgparameter = require('../index');
 var defineParameter = rpgparameter.defineParameter;
+var defineNumberParameter = rpgparameter.defineNumberParameter;
 
 
 describe('rpgparameter module', function() {
@@ -16,7 +17,6 @@ describe('rpgparameter module', function() {
     it('should be', function() {
       var creature = {};
       defineParameter(creature, 'maxHp', 1);
-
       assert.strictEqual(creature._maxHp, 1);
       assert.strictEqual(creature.maxHp, 1);
 
@@ -57,6 +57,49 @@ describe('rpgparameter module', function() {
       assert.throws(function() {
         creature.defenseRate = -0.01;
       }, /-0\.01/);
+    });
+  });
+
+  context('defineNumberParameter', function() {
+
+    it('should be', function() {
+      var creature = {};
+      defineNumberParameter(creature, 'money');
+      assert.strictEqual(creature.money, 0);
+      creature.money = 100;
+      creature.money = -100;
+    });
+
+    it('default option', function() {
+      var creature = {};
+      defineNumberParameter(creature, 'maxHp', {
+        default: 5
+      });
+      assert.strictEqual(creature.maxHp, 5);
+    });
+
+    it('min option', function() {
+      var creature = {};
+      defineNumberParameter(creature, 'money', {
+        min: 0
+      });
+      creature.money = 10;
+      creature.money = 0;
+      assert.throws(function() {
+        creature.money = -1;
+      }, /-1/);
+    });
+
+    it('max option', function() {
+      var creature = {};
+      defineNumberParameter(creature, 'money', {
+        max: 10
+      });
+      creature.money = -10;
+      creature.money = 10;
+      assert.throws(function() {
+        creature.money = 11;
+      }, /11/);
     });
   });
 });

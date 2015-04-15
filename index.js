@@ -78,7 +78,7 @@ var defineNumberParameter = function defineNumberParameter(obj, propName, option
     );
   };
 
-  defineParameter(obj, propName, options.default, options);
+  defineParameter(obj, propName, customOptions.default, options);
 };
 
 
