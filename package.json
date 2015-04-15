@@ -1,0 +1,32 @@
+{
+  "name": "rpgparameter",
+  "version": "1.0.0",
+  "author": "kjirou",
+  "bugs": {
+    "url": "https://github.com/kjirou/rpgparameter/issues"
+  },
+  "dependencies": {
+    "lodash": "3.6.0",
+    "underscore.string": "3.0.3"
+  },
+  "devDependencies": {
+    "fixpack": "2.2.0",
+    "jshint": "2.7.0",
+    "mocha": "2.2.4"
+  },
+  "homepage": "https://github.com/kjirou/rpgparameter",
+  "keywords": [
+    "game",
+    "rpg"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kjirou/rpgparameter.git"
+  },
+  "scripts": {
+    "lint": "jshint index.js",
+    "test": "mocha"
+  }
+}
