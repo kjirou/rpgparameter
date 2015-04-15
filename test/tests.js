@@ -3,6 +3,8 @@ var assert = require('assert');
 var rpgparameter = require('../index');
 var defineParameter = rpgparameter.defineParameter;
 var defineNumberParameter = rpgparameter.defineNumberParameter;
+var defineRateParameter = rpgparameter.defineRateParameter;
+var defineChanceParameter = rpgparameter.defineChanceParameter;
 
 
 describe('rpgparameter module', function() {
@@ -100,6 +102,37 @@ describe('rpgparameter module', function() {
       assert.throws(function() {
         creature.money = 11;
       }, /11/);
+    });
+  });
+
+  context('defineRateParameter', function() {
+
+    it('should be', function() {
+      var creature = {};
+      defineRateParameter(creature, 'damageRate', {});
+      assert.strictEqual(creature.damageRate, 1.0);
+      creature.damageRate = 0.0
+      creature.damageRate = 99.9
+      assert.throws(function() {
+        creature.damageRate = -0.01;
+      }, /-0.01/);
+    });
+  });
+
+  context('defineChanceParameter', function() {
+
+    it('should be', function() {
+      var creature = {};
+      defineChanceParameter(creature, 'guardChance', {});
+      assert.strictEqual(creature.guardChance, 0.0);
+      creature.guardChance = 0.0
+      creature.guardChance = 1.0
+      assert.throws(function() {
+        creature.guardChance = -0.01;
+      }, /-0.01/);
+      assert.throws(function() {
+        creature.guardChance = 1.01;
+      }, /1.01/);
     });
   });
 });

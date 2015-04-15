@@ -81,6 +81,25 @@ var defineNumberParameter = function defineNumberParameter(obj, propName, option
   defineParameter(obj, propName, customOptions.default, options);
 };
 
+var defineRateParameter = function defineRateParameter(obj, propName, options) {
+  options = _.assign({
+    default: 1.0
+  }, options || {}, {
+    min: 0.0
+  });
+  defineNumberParameter(obj, propName, options);
+};
+
+var defineChanceParameter = function defineChanceParameter(obj, propName, options) {
+  options = _.assign({
+    default: 0.0,
+  }, options || {}, {
+    min: 0.0,
+    max: 1.0
+  });
+  defineNumberParameter(obj, propName, options);
+};
+
 
 var aggregators = {};
 
@@ -88,6 +107,8 @@ var aggregators = {};
 module.exports = {
   defineParameter: defineParameter,
   defineNumberParameter: defineNumberParameter,
+  defineRateParameter: defineRateParameter,
+  defineChanceParameter: defineChanceParameter,
   formatters: formatters,
   aggregators: aggregators
 };
