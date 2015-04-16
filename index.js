@@ -2,32 +2,34 @@ var _ = require('lodash');
 var _s = require('underscore.string');
 
 
-//var within = function within(value, min, max) {
-//  return Math.min(Math.max(value, min), max);
-//}
-
-
-var formatters = {};
-
-
 /**
  * @param {object} obj
- * @param {string} propName
+ * @param {string} parameterName
  * @param {any} defaultValue
  * @param {object|undefined} options
  */
-var defineParameter = function defineParameter(obj, propName, defaultValue, options) {
+var defineParameter = function defineParameter(obj, parameterName, defaultValue, options) {
   options = _.assign({
     validate: function(value) {
       return true;
     },
     format: function(value) {
       return value.toString();
-    }
+    },
+    isHumanizedGetter: true
   }, options || {});
 
-  var privatePropName = '_' + propName;
-  var capitalizedPropName = _s.capitalize(propName);
+  var privatePropName = '_' + parameterName;
+  var classifiedPropName = _s.classify(parameterName);
+  // e.g. 'maxHp'   -> 'getMaxHp'
+  //      'isEnemy' -> 'isEnemy'
+  var getterName = 'get' + classifiedPropName;
+  if (
+    options.isHumanizedGetter &&
+    /^(is|has|can|should|will)/.test(parameterName)
+  ) {
+    getterName = _s.camelize(parameterName);
+  }
 
   //
   // NOTE:
@@ -52,12 +54,12 @@ var defineParameter = function defineParameter(obj, propName, defaultValue, opti
   //
 
   // getMaxHp
-  obj['get' + capitalizedPropName] = function get() {
+  obj[getterName] = function get() {
     return this[privatePropName];
   };
 
   // setMaxHp
-  obj['set' + capitalizedPropName] = function set(value) {
+  obj['set' + classifiedPropName] = function set(value) {
     if (!options.validate(value)) {
       throw new Error('`' + value + '` is invalid parameter');
     }
@@ -65,18 +67,18 @@ var defineParameter = function defineParameter(obj, propName, defaultValue, opti
   };
 
   // validateMaxHp
-  obj['validate' + capitalizedPropName] = options.validate;
+  obj['validate' + classifiedPropName] = options.validate;
 
   // displayMaxHp
-  obj['display' + capitalizedPropName] = function display() {
-    return options.format(this['get' + capitalizedPropName]());
+  obj['display' + classifiedPropName] = function display() {
+    return options.format(this[getterName]());
   };
 
   // set default value with validation
-  obj['set' + capitalizedPropName](defaultValue);
+  obj['set' + classifiedPropName](defaultValue);
 };
 
-var defineNumberParameter = function defineNumberParameter(obj, propName, options) {
+var defineNumberParameter = function defineNumberParameter(obj, parameterName, options) {
   options = _.assign({
     default: 0.0,
     min: null,
@@ -95,26 +97,42 @@ var defineNumberParameter = function defineNumberParameter(obj, propName, option
     );
   };
 
-  defineParameter(obj, propName, customOptions.default, options);
+  defineParameter(obj, parameterName, customOptions.default, options);
 };
 
-var defineRateParameter = function defineRateParameter(obj, propName, options) {
+var defineRateParameter = function defineRateParameter(obj, parameterName, options) {
   options = _.assign({
     default: 1.0
   }, options || {}, {
     min: 0.0
   });
-  defineNumberParameter(obj, propName, options);
+  defineNumberParameter(obj, parameterName, options);
 };
 
-var defineChanceParameter = function defineChanceParameter(obj, propName, options) {
+var defineChanceParameter = function defineChanceParameter(obj, parameterName, options) {
   options = _.assign({
     default: 0.0,
   }, options || {}, {
     min: 0.0,
     max: 1.0
   });
-  defineNumberParameter(obj, propName, options);
+  defineNumberParameter(obj, parameterName, options);
+};
+
+var defineBooleanParameter = function defineBooleanParameter(obj, parameterName, options) {
+  options = _.assign({
+    default: false
+  }, options || {});
+
+  var customOptionKeys = ['default'];
+  var customOptions = _.pick(options, customOptionKeys);
+  options = _.omit(options, customOptionKeys);
+
+  options.validate = function validate(value) {
+    return _.isBoolean(value);
+  };
+
+  defineParameter(obj, parameterName, customOptions.default, options);
 };
 
 
@@ -126,39 +144,11 @@ module.exports = {
   defineNumberParameter: defineNumberParameter,
   defineRateParameter: defineRateParameter,
   defineChanceParameter: defineChanceParameter,
-  formatters: formatters,
+  defineBooleanParameter: defineBooleanParameter,
   aggregators: aggregators
 };
 
 
-//_parameterNameToAccessorName = (parameterName) ->
-//  if /^(can|does|is)/.test parameterName
-//    parameterName
-//  else
-//    'get' + _.capitalize(parameterName)
-//
-//_parameterNameToDisplayerName = (parameterName) ->
-//  _parameterNameToAccessorName(parameterName) + 'Display'
-//
-//_parameterNameToRowDisplayerName = (parameterName) ->
-//  _parameterNameToAccessorName(parameterName) + 'RowDisplay'
-//
-//_getParameterLabel = (parameterName) ->
-//  label = x18n.t('feature.parameterModifier.label.' + parameterName)
-//  label ? parameterName
-//
-//
-//# 定型パラメータの一式を定義する
-//# - 表示が必要なパラメータの場合はこれで定義する必要がある
-//# - 定義順が表示順になる
-//_stereotypeParameterNames = []
-//_defineParameter = (subject, parameterName, parameterType) ->
-//  _stereotypeParameterNames.push parameterName
-//  dataKey = '_' + parameterName
-//  accessorName = _parameterNameToAccessorName parameterName
-//  displayerName = _parameterNameToDisplayerName parameterName
-//  rowDisplayerName = _parameterNameToRowDisplayerName parameterName
-//
 //  switch parameterType
 //    when 'flag'
 //      defaultValue = false

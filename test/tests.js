@@ -5,6 +5,7 @@ var defineParameter = rpgparameter.defineParameter;
 var defineNumberParameter = rpgparameter.defineNumberParameter;
 var defineRateParameter = rpgparameter.defineRateParameter;
 var defineChanceParameter = rpgparameter.defineChanceParameter;
+var defineBooleanParameter = rpgparameter.defineBooleanParameter;
 
 
 describe('rpgparameter module', function() {
@@ -136,6 +137,19 @@ describe('rpgparameter module', function() {
       assert.throws(function() {
         creature.setGuardChance(1.01);
       }, /1.01/);
+    });
+  });
+
+  context('defineBooleanParameter', function() {
+
+    it('should be', function() {
+      var creature = {};
+      defineBooleanParameter(creature, 'isEnemy');
+      assert.strictEqual(creature.isEnemy(), false);
+      creature.setIsEnemy(true);
+      assert.throws(function() {
+        creature.setIsEnemy(1);
+      }, /1/);
     });
   });
 });
