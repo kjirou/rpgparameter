@@ -29,34 +29,51 @@ var defineParameter = function defineParameter(obj, propName, defaultValue, opti
   var privatePropName = '_' + propName;
   var capitalizedPropName = _s.capitalize(propName);
 
-  var get = function get() {
+  //
+  // NOTE:
+  //
+  // Can not use Object.definePeoperty,
+  //   because defined getter/setter can not mix-in other object.
+  // I want to use like the following:
+  //
+  // ```
+  // var parameters = {};
+  // defineParameter(parameters, 'maxHp');
+  // defineParameter(parameters, 'attack');
+  // defineParameter(parameters, 'defense');
+  //
+  // var creature = {};
+  // mixin(creature, mixin);
+  // var skill = {};
+  // mixin(skill, mixin);
+  // var equipment = {};
+  // mixin(equipment, mixin);
+  // ```
+  //
+
+  // getMaxHp
+  obj['get' + capitalizedPropName] = function get() {
     return this[privatePropName];
   };
 
-  var set = function set(value) {
+  // setMaxHp
+  obj['set' + capitalizedPropName] = function set(value) {
     if (!options.validate(value)) {
       throw new Error('`' + value + '` is invalid parameter');
     }
     this[privatePropName] = value;
   };
 
-  // obj.maxHp .. getter, setter
-  // obj._maxHp .. raw data
-  Object.defineProperty(obj, propName, {
-    get: get,
-    set: set
-  });
-
   // validateMaxHp
   obj['validate' + capitalizedPropName] = options.validate;
 
   // displayMaxHp
   obj['display' + capitalizedPropName] = function display() {
-    return options.format(this[propName]);
+    return options.format(this['get' + capitalizedPropName]());
   };
 
   // set default value with validation
-  obj[propName] = defaultValue;
+  obj['set' + capitalizedPropName](defaultValue);
 };
 
 var defineNumberParameter = function defineNumberParameter(obj, propName, options) {

@@ -20,11 +20,11 @@ describe('rpgparameter module', function() {
       var creature = {};
       defineParameter(creature, 'maxHp', 1);
       assert.strictEqual(creature._maxHp, 1);
-      assert.strictEqual(creature.maxHp, 1);
+      assert.strictEqual(creature.getMaxHp(), 1);
 
-      creature.maxHp = 2;
+      creature.setMaxHp(2);
       assert.strictEqual(creature._maxHp, 2);
-      assert.strictEqual(creature.maxHp, 2);
+      assert.strictEqual(creature.getMaxHp(), 2);
     });
 
     it('format option', function() {
@@ -40,7 +40,7 @@ describe('rpgparameter module', function() {
       });
       assert.strictEqual(creature.displayAttackPower(), '10pts');
 
-      creature.attackPower = 1;
+      creature.setAttackPower(1);
       assert.strictEqual(creature.displayAttackPower(), '1pt');
     });
 
@@ -54,22 +54,23 @@ describe('rpgparameter module', function() {
       assert.strictEqual(creature.validateDefenseRate(1.0), true);
       assert.strictEqual(creature.validateDefenseRate(1.01), false);
 
-      creature.defenseRate = 1.0;
-      assert.strictEqual(creature.defenseRate, 1.0);
+      creature.setDefenseRate(1.0);
+      assert.strictEqual(creature.getDefenseRate(), 1.0);
       assert.throws(function() {
-        creature.defenseRate = -0.01;
+        creature.setDefenseRate(-0.01);
       }, /-0\.01/);
     });
   });
+
 
   context('defineNumberParameter', function() {
 
     it('should be', function() {
       var creature = {};
       defineNumberParameter(creature, 'money');
-      assert.strictEqual(creature.money, 0);
-      creature.money = 100;
-      creature.money = -100;
+      assert.strictEqual(creature.getMoney(), 0);
+      creature.setMoney(100);
+      creature.setMoney(-100);
     });
 
     it('default option', function() {
@@ -77,7 +78,7 @@ describe('rpgparameter module', function() {
       defineNumberParameter(creature, 'maxHp', {
         default: 5
       });
-      assert.strictEqual(creature.maxHp, 5);
+      assert.strictEqual(creature.getMaxHp(), 5);
     });
 
     it('min option', function() {
@@ -85,10 +86,10 @@ describe('rpgparameter module', function() {
       defineNumberParameter(creature, 'money', {
         min: 0
       });
-      creature.money = 10;
-      creature.money = 0;
+      creature.setMoney(10);
+      creature.setMoney(0);
       assert.throws(function() {
-        creature.money = -1;
+        creature.setMoney(-1);
       }, /-1/);
     });
 
@@ -97,41 +98,43 @@ describe('rpgparameter module', function() {
       defineNumberParameter(creature, 'money', {
         max: 10
       });
-      creature.money = -10;
-      creature.money = 10;
+      creature.getMoney(-10);
+      creature.getMoney(10);
       assert.throws(function() {
-        creature.money = 11;
+        creature.setMoney(11);
       }, /11/);
     });
   });
+
 
   context('defineRateParameter', function() {
 
     it('should be', function() {
       var creature = {};
-      defineRateParameter(creature, 'damageRate', {});
-      assert.strictEqual(creature.damageRate, 1.0);
-      creature.damageRate = 0.0
-      creature.damageRate = 99.9
+      defineRateParameter(creature, 'damageRate');
+      assert.strictEqual(creature.getDamageRate(), 1.0);
+      creature.setDamageRate(0.0);
+      creature.setDamageRate(99.9);
       assert.throws(function() {
-        creature.damageRate = -0.01;
+        creature.setDamageRate(-0.01);
       }, /-0.01/);
     });
   });
+
 
   context('defineChanceParameter', function() {
 
     it('should be', function() {
       var creature = {};
-      defineChanceParameter(creature, 'guardChance', {});
-      assert.strictEqual(creature.guardChance, 0.0);
-      creature.guardChance = 0.0
-      creature.guardChance = 1.0
+      defineChanceParameter(creature, 'guardChance');
+      assert.strictEqual(creature.getGuardChance(), 0.0);
+      creature.setGuardChance(0.0);
+      creature.setGuardChance(1.0);
       assert.throws(function() {
-        creature.guardChance = -0.01;
+        creature.setGuardChance(-0.01);
       }, /-0.01/);
       assert.throws(function() {
-        creature.guardChance = 1.01;
+        creature.setGuardChance(1.01);
       }, /1.01/);
     });
   });
