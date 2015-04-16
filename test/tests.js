@@ -61,6 +61,21 @@ describe('rpgparameter module', function() {
         creature.setDefenseRate(-0.01);
       }, /-0\.01/);
     });
+
+    it('isHumanizedGetter option', function() {
+      var creature;
+      creature = {};
+      defineParameter(creature, 'isUnique', false);
+      assert.strictEqual(creature.isUnique(), false);
+      creature.setIsUnique(true);
+      assert.strictEqual(creature.isUnique(), true);
+
+      creature = {};
+      defineParameter(creature, 'isUnique', false, {
+        isHumanizedGetter: false
+      });
+      assert.strictEqual(creature.getIsUnique(), false);
+    });
   });
 
 

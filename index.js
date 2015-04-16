@@ -19,7 +19,7 @@ var defineParameter = function defineParameter(obj, parameterName, defaultValue,
     isHumanizedGetter: true
   }, options || {});
 
-  var privatePropName = '_' + parameterName;
+  var privatePropName = '_' + _s.camelize(parameterName, true);
   var classifiedPropName = _s.classify(parameterName);
   // e.g. 'maxHp'   -> 'getMaxHp'
   //      'isEnemy' -> 'isEnemy'
@@ -28,7 +28,7 @@ var defineParameter = function defineParameter(obj, parameterName, defaultValue,
     options.isHumanizedGetter &&
     /^(is|has|can|should|will)/.test(parameterName)
   ) {
-    getterName = _s.camelize(parameterName);
+    getterName = _s.camelize(parameterName, true);
   }
 
   //
