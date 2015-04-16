@@ -3,6 +3,7 @@ var assert = require('assert');
 var rpgparameter = require('../index');
 var defineParameter = rpgparameter.defineParameter;
 var defineNumberParameter = rpgparameter.defineNumberParameter;
+var defineIntegerParameter = rpgparameter.defineIntegerParameter;
 var defineRateParameter = rpgparameter.defineRateParameter;
 var defineChanceParameter = rpgparameter.defineChanceParameter;
 var defineBooleanParameter = rpgparameter.defineBooleanParameter;
@@ -119,6 +120,21 @@ describe('rpgparameter module', function() {
       assert.throws(function() {
         creature.setMoney(11);
       }, /11/);
+    });
+  });
+
+
+  context('defineIntegerParameter', function() {
+
+    it('should be', function() {
+      var creature = {};
+      defineIntegerParameter(creature, 'level');
+      assert.strictEqual(creature.getLevel(), 0);
+      creature.setLevel(99);
+      creature.setLevel(-99);
+      assert.throws(function() {
+        creature.setLevel(1.01);
+      }, /1.01/);
     });
   });
 

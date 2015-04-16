@@ -1,3 +1,4 @@
+var isInteger = require('is-integer');
 var _ = require('lodash');
 var _s = require('underscore.string');
 
@@ -82,10 +83,11 @@ var defineNumberParameter = function defineNumberParameter(obj, parameterName, o
   options = _.assign({
     default: 0.0,
     min: null,
-    max: null
+    max: null,
+    isIntegerOnly: false
   }, options || {});
 
-  var customOptionKeys = ['default', 'min', 'max'];
+  var customOptionKeys = ['default', 'min', 'max', 'isIntegerOnly'];
   var customOptions = _.pick(options, customOptionKeys);
   options = _.omit(options, customOptionKeys);
 
@@ -93,11 +95,16 @@ var defineNumberParameter = function defineNumberParameter(obj, parameterName, o
     return (
       _.isNumber(value) && !_.isNaN(value) &&
       (customOptions.min === null || customOptions.min <= value) &&
-      (customOptions.max === null || customOptions.max >= value)
+      (customOptions.max === null || customOptions.max >= value) &&
+      (!customOptions.isIntegerOnly || isInteger(value))
     );
   };
 
   defineParameter(obj, parameterName, customOptions.default, options);
+};
+
+var defineIntegerParameter = function defineIntegerParameter(obj, parameterName, options) {
+  defineNumberParameter(obj, parameterName, _.assign({}, options, { isIntegerOnly: true }));
 };
 
 var defineRateParameter = function defineRateParameter(obj, parameterName, options) {
@@ -142,6 +149,7 @@ var aggregators = {};
 module.exports = {
   defineParameter: defineParameter,
   defineNumberParameter: defineNumberParameter,
+  defineIntegerParameter: defineIntegerParameter,
   defineRateParameter: defineRateParameter,
   defineChanceParameter: defineChanceParameter,
   defineBooleanParameter: defineBooleanParameter,
