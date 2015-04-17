@@ -4,6 +4,7 @@
 [![Build Status](https://travis-ci.org/kjirou/rpgparameter.svg?branch=master)](https://travis-ci.org/kjirou/rpgparameter)
 
 Define parameters for games like RPG.
+
 It is experimental module.
 
 
