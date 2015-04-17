@@ -7,12 +7,17 @@ var defineIntegerParameter = rpgparameter.defineIntegerParameter;
 var defineRateParameter = rpgparameter.defineRateParameter;
 var defineChanceParameter = rpgparameter.defineChanceParameter;
 var defineBooleanParameter = rpgparameter.defineBooleanParameter;
+var aggregators = rpgparameter.aggregators;
 
 
 describe('rpgparameter module', function() {
 
   it('should be defined as object', function() {
     assert.strictEqual(typeof rpgparameter, 'object');
+  });
+
+  it('should aggregators exist', function() {
+    assert.strictEqual(typeof aggregators, 'object');
   });
 
 

@@ -27,7 +27,7 @@
     "url": "https://github.com/kjirou/rpgparameter.git"
   },
   "scripts": {
-    "lint": "jshint index.js",
+    "lint": "jshint index.js lib/aggregators.js",
     "test": "mocha"
   }
 }
