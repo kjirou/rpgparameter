@@ -56,9 +56,14 @@ var defineParameter = function defineParameter(obj, parameterName, defaultValue,
   // ```
   //
 
-  // getMaxHp
-  obj[getterName] = function get() {
+  // getRawMaxHp
+  obj['getRaw' + classifiedPropName] = function getRaw() {
     return this[privatePropName];
+  };
+
+  // getMaxHp (or isFooBar or canFooBar etc)
+  obj[getterName] = function get() {
+    return this['getRaw' + classifiedPropName]();
   };
 
   // setMaxHp
