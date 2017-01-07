@@ -1,6 +1,6 @@
 {
   "name": "rpgparameter",
-  "description": "Define parameters for games like RPG",
+  "description": "A parameter definition utility for Hack & Slash games",
   "version": "2.0.0",
   "author": "kjirou",
   "bugs": {
