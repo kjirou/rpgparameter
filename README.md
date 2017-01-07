@@ -7,7 +7,7 @@ A parameter definition utility for Hack & Slash games.
 
 
 ## Installation
-```
+```bash
 npm install rpgparameter
 ```
 
