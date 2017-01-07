@@ -45,7 +45,7 @@ describe('rpgparameter', function() {
       }, /defaultValue/);
     });
 
-    it('clampValue', function() {
+    it('min / max / clampValue', function() {
       var shape = createNumberParameterShape({
         min: 5,
         defaultValue: 5
@@ -67,6 +67,8 @@ describe('rpgparameter', function() {
         max: 10,
         defaultValue: 10
       });
+      assert.strictEqual(shape3.min, 5);
+      assert.strictEqual(shape3.max, 10);
       assert.strictEqual(shape3.clampValue(5), 5);
       assert.strictEqual(shape3.clampValue(15), 10);
       assert.strictEqual(shape3.clampValue(4), 5);
