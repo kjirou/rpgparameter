@@ -1,6 +1,7 @@
 var assert = require('assert');
 
 var rpgparameter = require('../index');
+var createNumberParameterShape = rpgparameter.createNumberParameterShape;
 var defineParameter = rpgparameter.defineParameter;
 var defineNumberParameter = rpgparameter.defineNumberParameter;
 var defineIntegerParameter = rpgparameter.defineIntegerParameter;
@@ -17,6 +18,59 @@ describe('rpgparameter', function() {
 
   it('should have aggregators', function() {
     assert.strictEqual(typeof aggregators, 'object');
+  });
+
+  describe('createNumberParameterShape', function() {
+    it('can execute correctly', function() {
+      var shape = createNumberParameterShape();
+
+      assert.strictEqual(shape.defaultValue, 0.0);
+
+      assert.strictEqual(shape.validateValue(0), true);
+      assert.strictEqual(shape.validateValue(1), true);
+      assert.strictEqual(shape.validateValue(-1), true);
+      assert.strictEqual(shape.validateValue(1.1), true);
+      assert.strictEqual(shape.validateValue('0'), false);
+      assert.strictEqual(shape.validateValue(true), false);
+      assert.strictEqual(shape.validateValue(NaN), false);
+
+      assert.strictEqual(shape.displayValue(100), '100');
+    });
+
+    it('should throw an error if defaultValue is invalid', function() {
+      assert.throws(function() {
+        createNumberParameterShape({
+          min: 1
+        });
+      }, /defaultValue/);
+    });
+
+    it('clampValue', function() {
+      var shape = createNumberParameterShape({
+        min: 5,
+        defaultValue: 5
+      });
+      assert.strictEqual(shape.clampValue(5), 5);
+      assert.strictEqual(shape.clampValue(15), 15);
+      assert.strictEqual(shape.clampValue(4), 5);
+
+      var shape2 = createNumberParameterShape({
+        max: 5,
+        defaultValue: 5
+      });
+      assert.strictEqual(shape2.clampValue(5), 5);
+      assert.strictEqual(shape2.clampValue(15), 5);
+      assert.strictEqual(shape2.clampValue(4), 4);
+
+      var shape3 = createNumberParameterShape({
+        min: 5,
+        max: 10,
+        defaultValue: 10
+      });
+      assert.strictEqual(shape3.clampValue(5), 5);
+      assert.strictEqual(shape3.clampValue(15), 10);
+      assert.strictEqual(shape3.clampValue(4), 5);
+    });
   });
 
   describe('defineParameter', function() {

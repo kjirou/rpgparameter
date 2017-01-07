@@ -90,14 +90,14 @@ var createNumberParameterShape = function createNumberParameterShape(options) {
       var clampedValue = value;
 
       if (defaultedOptions.min !== null) {
-        clampedValue = Math.min(defaultedOptions.min, value);
+        clampedValue = Math.max(defaultedOptions.min, clampedValue);
       }
 
       if (defaultedOptions.max !== null) {
-        clampedValue = Math.max(defaultedOptions.max, value);
+        clampedValue = Math.min(defaultedOptions.max, clampedValue);
       }
 
-      return value;
+      return clampedValue;
     }
   });
 };
