@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 var assert = require('assert');
-var _ = require('lodash');
 var util = require('util');
 
 var rpgparameters = require('../index');
@@ -16,7 +15,7 @@ rpgparameters.defineChanceParameter(ParametersMixin, 'guardChance');
 
 // skill
 var Skill = function() {};
-_.assign(Skill.prototype, ParametersMixin);
+Object.assign(Skill.prototype, ParametersMixin);
 
 var AttackUpSkill = function() {
   Skill.apply(this);
@@ -26,7 +25,7 @@ util.inherits(AttackUpSkill, Skill);
 
 // equipment
 var Equipment = function Equipment() {};
-_.assign(Equipment.prototype, ParametersMixin);
+Object.assign(Equipment.prototype, ParametersMixin);
 
 var ShieldEquipment = function() {
   Equipment.apply(this);
@@ -36,7 +35,7 @@ util.inherits(ShieldEquipment, Equipment);
 
 // buff
 var Buff = function Buff() {};
-_.assign(Buff.prototype, ParametersMixin);
+Object.assign(Buff.prototype, ParametersMixin);
 
 var BerserkBuff = function() {
   Buff.apply(this);
@@ -51,7 +50,7 @@ var Creature = function() {
   this._equipment = null;
   this._buff = null;
 };
-_.assign(Creature.prototype, ParametersMixin);
+Object.assign(Creature.prototype, ParametersMixin);
 
 Creature.prototype.getMaxHpRate = function() {
   var parameters = [this.getRawMaxHpRate()];
