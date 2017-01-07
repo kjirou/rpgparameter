@@ -1,6 +1,6 @@
 var assert = require('assert');
 
-var aggregators = require('../index').aggregators;
+var aggregators = require('../../lib/aggregators');
 
 
 describe('rpgparameter aggregators module', function() {
