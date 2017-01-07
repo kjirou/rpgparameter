@@ -170,7 +170,8 @@ var generatePropertyNames = function generatePropertyNames(parameterName) {
  * @param {(Object|undefined)} options
  */
 var defineProperties = function defineProperties(
-  obj, parameterName, defaultValue, validateParameter, displayParameter, options) {
+  obj, parameterName, defaultValue, validateParameter, displayParameter, options
+) {
   var defaultedOptions = assign({
     isEnabledHumanizedGetter: true
   }, options || {});
@@ -187,7 +188,7 @@ var defineProperties = function defineProperties(
   };
 
   obj[propNames.getterName] = function getParameterValue() {
-    return obj[propNames.rawGetterName]();
+    return this[propNames.rawGetterName]();
   };
 
   if (
