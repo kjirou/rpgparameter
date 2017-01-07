@@ -86,6 +86,8 @@ var createNumberParameterShape = function createNumberParameterShape(options) {
   var parameterShape = createParameterShape(parameterOptions);
 
   return assign(parameterShape, {
+    min: defaultedOptions.min,
+    max: defaultedOptions.max,
     clampValue: function clampValue(value) {
       var clampedValue = value;
 
