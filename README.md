@@ -13,16 +13,8 @@ It is experimental module.
 npm install rpgparameter
 ```
 
-Or, you can use in browser through the [browserify](https://github.com/substack/node-browserify).
+Or, you can use in browser through [browserify](https://github.com/substack/node-browserify) or [webpack](https://github.com/webpack).
 
 
 ## Usage
 Show [examples](examples).
-
-
-## Development
-### Purpose
-- 値の型を定義したい
-  - 値の本体は、オブジェクトではなく primitive な値にしたい
-- 値の型により集計方法を決めたい
-  - 集計結果は集計順序に依存してはいけない

@@ -1,18 +1,19 @@
 var isInteger = require('is-integer');
-var _ = require('lodash');
+var assign = require('object-assign');
 var _s = require('underscore.string');
 
 var aggregators = require('./lib/aggregators');
+var utils = require('./lib/utils');
 
 
 /**
  * @param {object} obj
  * @param {string} parameterName
  * @param {any} defaultValue
- * @param {object|undefined} options
+ * @param {(object|undefined)} options
  */
 var defineParameter = function defineParameter(obj, parameterName, defaultValue, options) {
-  options = _.assign({
+  options = assign({
     validate: function(value) {
       return true;
     },
@@ -87,7 +88,7 @@ var defineParameter = function defineParameter(obj, parameterName, defaultValue,
 };
 
 var defineNumberParameter = function defineNumberParameter(obj, parameterName, options) {
-  options = _.assign({
+  options = assign({
     default: 0.0,
     min: null,
     max: null,
@@ -95,12 +96,12 @@ var defineNumberParameter = function defineNumberParameter(obj, parameterName, o
   }, options || {});
 
   var customOptionKeys = ['default', 'min', 'max', 'isIntegerOnly'];
-  var customOptions = _.pick(options, customOptionKeys);
-  options = _.omit(options, customOptionKeys);
+  var customOptions = utils.pickKeys(options, customOptionKeys);
+  options = utils.omitKeys(options, customOptionKeys);
 
   options.validate = function validate(value) {
     return (
-      _.isNumber(value) && !_.isNaN(value) &&
+      typeof value === 'number' && !isNaN(value) &&
       (customOptions.min === null || customOptions.min <= value) &&
       (customOptions.max === null || customOptions.max >= value) &&
       (!customOptions.isIntegerOnly || isInteger(value))
@@ -111,11 +112,11 @@ var defineNumberParameter = function defineNumberParameter(obj, parameterName, o
 };
 
 var defineIntegerParameter = function defineIntegerParameter(obj, parameterName, options) {
-  defineNumberParameter(obj, parameterName, _.assign({}, options, { isIntegerOnly: true }));
+  defineNumberParameter(obj, parameterName, assign({}, options, { isIntegerOnly: true }));
 };
 
 var defineRateParameter = function defineRateParameter(obj, parameterName, options) {
-  options = _.assign({
+  options = assign({
     default: 1.0
   }, options || {}, {
     min: 0.0
@@ -124,7 +125,7 @@ var defineRateParameter = function defineRateParameter(obj, parameterName, optio
 };
 
 var defineChanceParameter = function defineChanceParameter(obj, parameterName, options) {
-  options = _.assign({
+  options = assign({
     default: 0.0,
   }, options || {}, {
     min: 0.0,
@@ -134,16 +135,16 @@ var defineChanceParameter = function defineChanceParameter(obj, parameterName, o
 };
 
 var defineBooleanParameter = function defineBooleanParameter(obj, parameterName, options) {
-  options = _.assign({
+  options = assign({
     default: false
   }, options || {});
 
   var customOptionKeys = ['default'];
-  var customOptions = _.pick(options, customOptionKeys);
-  options = _.omit(options, customOptionKeys);
+  var customOptions = utils.pickKeys(options, customOptionKeys);
+  options = utils.omitKeys(options, customOptionKeys);
 
   options.validate = function validate(value) {
-    return _.isBoolean(value);
+    return value === true || value === false;
   };
 
   defineParameter(obj, parameterName, customOptions.default, options);

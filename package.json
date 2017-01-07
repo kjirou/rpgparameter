@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "is-integer": "1.0.4",
-    "lodash": "3.6.0",
+    "object-assign": "4.1.0",
     "underscore.string": "3.0.3"
   },
   "devDependencies": {
@@ -17,6 +17,10 @@
     "jshint": "2.7.0",
     "mocha": "2.2.4",
     "testem": "0.8.0"
+  },
+  "engines": {
+    "node": ">=0.12 <7",
+    "npm": ">=2 <4"
   },
   "homepage": "https://github.com/kjirou/rpgparameter",
   "keywords": [
@@ -31,10 +35,10 @@
   },
   "scripts": {
     "browser-test": "testem",
-    "build": "cp node_modules/mocha/mocha.css public/dist & cp node_modules/mocha/mocha.js public/dist & browserify public/tests.js > public/dist/bundle.js",
+    "build": "cp node_modules/mocha/mocha.css public/dist && cp node_modules/mocha/mocha.js public/dist && browserify public/tests.js > public/dist/bundle.js",
     "ci-browser-test": "testem ci -l phantomjs",
     "cli-browser-test": "testem ci -l phantomjs,chrome,firefox",
     "lint": "jshint index.js lib/aggregators.js",
-    "test": "mocha"
+    "test": "mocha --recursive"
   }
 }
