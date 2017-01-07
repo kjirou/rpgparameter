@@ -1,6 +1,7 @@
 var assert = require('assert');
 
 var rpgparameter = require('../index');
+var createNumberParameterShape = rpgparameter.createNumberParameterShape;
 var defineParameter = rpgparameter.defineParameter;
 var defineNumberParameter = rpgparameter.defineNumberParameter;
 var defineIntegerParameter = rpgparameter.defineIntegerParameter;
@@ -10,22 +11,75 @@ var defineBooleanParameter = rpgparameter.defineBooleanParameter;
 var aggregators = rpgparameter.aggregators;
 
 
-describe('rpgparameter module', function() {
-
-  it('should be defined as object', function() {
+describe('rpgparameter', function() {
+  it('should be defined as an object', function() {
     assert.strictEqual(typeof rpgparameter, 'object');
   });
 
-  it('should aggregators exist', function() {
+  it('should have aggregators', function() {
     assert.strictEqual(typeof aggregators, 'object');
   });
 
+  describe('createNumberParameterShape', function() {
+    it('can execute correctly', function() {
+      var shape = createNumberParameterShape();
 
-  context('defineParameter', function() {
+      assert.strictEqual(shape.defaultValue, 0.0);
 
-    it('should be', function() {
+      assert.strictEqual(shape.validateValue(0), true);
+      assert.strictEqual(shape.validateValue(1), true);
+      assert.strictEqual(shape.validateValue(-1), true);
+      assert.strictEqual(shape.validateValue(1.1), true);
+      assert.strictEqual(shape.validateValue('0'), false);
+      assert.strictEqual(shape.validateValue(true), false);
+      assert.strictEqual(shape.validateValue(NaN), false);
+
+      assert.strictEqual(shape.displayValue(100), '100');
+    });
+
+    it('should throw an error if defaultValue is invalid', function() {
+      assert.throws(function() {
+        createNumberParameterShape({
+          min: 1
+        });
+      }, /defaultValue/);
+    });
+
+    it('clampValue', function() {
+      var shape = createNumberParameterShape({
+        min: 5,
+        defaultValue: 5
+      });
+      assert.strictEqual(shape.clampValue(5), 5);
+      assert.strictEqual(shape.clampValue(15), 15);
+      assert.strictEqual(shape.clampValue(4), 5);
+
+      var shape2 = createNumberParameterShape({
+        max: 5,
+        defaultValue: 5
+      });
+      assert.strictEqual(shape2.clampValue(5), 5);
+      assert.strictEqual(shape2.clampValue(15), 5);
+      assert.strictEqual(shape2.clampValue(4), 4);
+
+      var shape3 = createNumberParameterShape({
+        min: 5,
+        max: 10,
+        defaultValue: 10
+      });
+      assert.strictEqual(shape3.clampValue(5), 5);
+      assert.strictEqual(shape3.clampValue(15), 10);
+      assert.strictEqual(shape3.clampValue(4), 5);
+    });
+  });
+
+  describe('defineParameter', function() {
+    it('can execute correctly', function() {
       var creature = {};
-      defineParameter(creature, 'maxHp', 1);
+      defineParameter(creature, 'maxHp', {
+        defaultValue: 1
+      });
+
       assert.strictEqual(creature._maxHp, 1);
       assert.strictEqual(creature.getMaxHp(), 1);
 
@@ -36,14 +90,15 @@ describe('rpgparameter module', function() {
 
     it('format option', function() {
       var creature = {};
-      defineParameter(creature, 'attackPower', 10, {
-        format: function(value) {
+      defineParameter(creature, 'attackPower', {
+        displayValue: function(value) {
           if (value > 1) {
             return value + 'pts';
           } else {
             return value + 'pt';
           }
-        }
+        },
+        defaultValue: 10
       });
       assert.strictEqual(creature.displayAttackPower(), '10pts');
 
@@ -53,11 +108,13 @@ describe('rpgparameter module', function() {
 
     it('validate option', function() {
       var creature = {};
-      defineParameter(creature, 'defenseRate', 0.0, {
-        validate: function(value) {
+      defineParameter(creature, 'defenseRate', {
+        validateValue: function(value) {
           return 0.0 <= value && value <= 1.0;
-        }
+        },
+        defaultValue: 0.0
       });
+
       assert.strictEqual(creature.validateDefenseRate(1.0), true);
       assert.strictEqual(creature.validateDefenseRate(1.01), false);
 
@@ -68,26 +125,33 @@ describe('rpgparameter module', function() {
       }, /-0\.01/);
     });
 
-    it('isHumanizedGetter option', function() {
+    it('isEnabledHumanizedGetter option', function() {
       var creature;
       creature = {};
-      defineParameter(creature, 'isUnique', false);
+      defineParameter(creature, 'isUnique', {
+        defaultValue: false
+      });
+
       assert.strictEqual(creature.isUnique(), false);
+      assert.strictEqual(creature.getIsUnique(), false);
+
       creature.setIsUnique(true);
       assert.strictEqual(creature.isUnique(), true);
+      assert.strictEqual(creature.getIsUnique(), true);
 
       creature = {};
-      defineParameter(creature, 'isUnique', false, {
-        isHumanizedGetter: false
+      defineParameter(creature, 'isUnique', {
+        isEnabledHumanizedGetter: false,
+        defaultValue: false
       });
+
       assert.strictEqual(creature.getIsUnique(), false);
+      assert.strictEqual('isUnique' in creature, false);
     });
   });
 
-
-  context('defineNumberParameter', function() {
-
-    it('should be', function() {
+  describe('defineNumberParameter', function() {
+    it('can execute correctly', function() {
       var creature = {};
       defineNumberParameter(creature, 'money');
       assert.strictEqual(creature.getMoney(), 0);
@@ -98,7 +162,7 @@ describe('rpgparameter module', function() {
     it('default option', function() {
       var creature = {};
       defineNumberParameter(creature, 'maxHp', {
-        default: 5
+        defaultValue: 5
       });
       assert.strictEqual(creature.getMaxHp(), 5);
     });
@@ -128,45 +192,54 @@ describe('rpgparameter module', function() {
     });
   });
 
-
-  context('defineIntegerParameter', function() {
-
-    it('should be', function() {
+  describe('defineIntegerParameter', function() {
+    it('can execute correctly', function() {
       var creature = {};
       defineIntegerParameter(creature, 'level');
+
       assert.strictEqual(creature.getLevel(), 0);
+
       creature.setLevel(99);
+      assert.strictEqual(creature.getLevel(), 99);
       creature.setLevel(-99);
+      assert.strictEqual(creature.getLevel(), -99);
+
       assert.throws(function() {
         creature.setLevel(1.01);
       }, /1.01/);
     });
   });
 
-
-  context('defineRateParameter', function() {
-
-    it('should be', function() {
+  describe('defineRateParameter', function() {
+    it('can execute correctly', function() {
       var creature = {};
       defineRateParameter(creature, 'damageRate');
+
       assert.strictEqual(creature.getDamageRate(), 1.0);
+
       creature.setDamageRate(0.0);
+      assert.strictEqual(creature.getDamageRate(), 0.0);
       creature.setDamageRate(99.9);
+      assert.strictEqual(creature.getDamageRate(), 99.9);
+
       assert.throws(function() {
         creature.setDamageRate(-0.01);
       }, /-0.01/);
     });
   });
 
-
-  context('defineChanceParameter', function() {
-
-    it('should be', function() {
+  describe('defineChanceParameter', function() {
+    it('can execute correctly', function() {
       var creature = {};
       defineChanceParameter(creature, 'guardChance');
+
       assert.strictEqual(creature.getGuardChance(), 0.0);
+      assert.strictEqual(creature.displayGuardChance(), '0');
+
       creature.setGuardChance(0.0);
       creature.setGuardChance(1.0);
+      assert.strictEqual(creature.getGuardChance(), 1.0);
+
       assert.throws(function() {
         creature.setGuardChance(-0.01);
       }, /-0.01/);
@@ -174,18 +247,44 @@ describe('rpgparameter module', function() {
         creature.setGuardChance(1.01);
       }, /1.01/);
     });
+
+    it('options', function() {
+      var creature = {};
+      defineChanceParameter(creature, 'antiMagicChance', {
+        defaultValue: 0.5,
+        displayValue: function() { return 'Foo'; }
+      });
+
+      assert.strictEqual(creature.getAntiMagicChance(), 0.5);
+      assert.strictEqual(creature.displayAntiMagicChance(), 'Foo');
+    });
   });
 
-  context('defineBooleanParameter', function() {
-
-    it('should be', function() {
+  describe('defineBooleanParameter', function() {
+    it('can execute correctly', function() {
       var creature = {};
       defineBooleanParameter(creature, 'isEnemy');
+
       assert.strictEqual(creature.isEnemy(), false);
+      assert.strictEqual(creature.displayIsEnemy(), 'false');
+
       creature.setIsEnemy(true);
+      assert.strictEqual(creature.isEnemy(), true);
+
       assert.throws(function() {
         creature.setIsEnemy(1);
       }, /1/);
+    });
+
+    it('options', function() {
+      var creature = {};
+      defineBooleanParameter(creature, 'canFly', {
+        defaultValue: true,
+        displayValue: function() { return 'Foo'; }
+      });
+
+      assert.strictEqual(creature.canFly(), true);
+      assert.strictEqual(creature.displayCanFly(), 'Foo');
     });
   });
 });

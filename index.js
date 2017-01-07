@@ -6,157 +6,273 @@ var aggregators = require('./lib/aggregators');
 var utils = require('./lib/utils');
 
 
-/**
- * @param {object} obj
- * @param {string} parameterName
- * @param {any} defaultValue
- * @param {(object|undefined)} options
- */
-var defineParameter = function defineParameter(obj, parameterName, defaultValue, options) {
-  options = assign({
-    validate: function(value) {
+var PARAMETER_SHAPE_TYPES = {
+  BOOLEAN: 'BOOLEAN',
+  CHANCE: 'CHANCE',
+  INTEGER: 'INTEGER',
+  NUMBER: 'NUMBER',
+  PARAMETER: 'PARAMETER',
+  RATE: 'RATE'
+};
+
+var createParameterShapeDefaultOptions = function createParameterShapeDefaultOptions() {
+  return {
+    type: PARAMETER_SHAPE_TYPES.PARAMETER,
+
+    defaultValue: null,
+
+    validateValue: function validateValueAsParameter(value) {
       return true;
     },
-    format: function(value) {
-      return value.toString();
-    },
-    isHumanizedGetter: true
-  }, options || {});
 
-  var privatePropName = '_' + _s.camelize(parameterName, true);
-  var classifiedPropName = _s.classify(parameterName);
-  // e.g. 'maxHp'   -> 'getMaxHp'
-  //      'isEnemy' -> 'isEnemy'
-  var getterName = 'get' + classifiedPropName;
+    displayValue: function displayValue(value) {
+      return value.toString();
+    }
+  };
+};
+
+/**
+ * @return {{type, defaultValue, displayValue, validateValue}}
+ */
+var createParameterShape = function createParameterShape(options) {
+  var defaultedOptions = assign(createParameterShapeDefaultOptions(), options || {});
+
   if (
-    options.isHumanizedGetter &&
-    /^(is|has|can|should|will)/.test(parameterName)
+    defaultedOptions.defaultValue !== null &&
+    defaultedOptions.defaultValue !== undefined &&
+    defaultedOptions.validateValue(defaultedOptions.defaultValue) === false
   ) {
-    getterName = _s.camelize(parameterName, true);
+    throw new Error('Invalid defaultValue');
   }
 
+  return {
+    type: defaultedOptions.type,
+
+    defaultValue: defaultedOptions.defaultValue,
+
+    validateValue: function validateValue(value) {
+      return defaultedOptions.validateValue(value);
+    },
+
+    displayValue: function displayValue(value) {
+      return defaultedOptions.displayValue(value);
+    }
+  };
+};
+
+/**
+ * @return {{type, getDisplayName, validateValue, clampValue}}
+ */
+var createNumberParameterShape = function createNumberParameterShape(options) {
+  var defaultedOptions = assign({
+    min: null,
+    max: null,
+    isIntegerOnly: false,
+    defaultValue: 0.0
+  }, options || {});
+
+  var keys = Object.keys(createParameterShapeDefaultOptions());
+  var parameterOptions = assign(utils.pickKeys(defaultedOptions, keys), {
+    validateValue: function validateValueAsNumber(value) {
+      return (
+        typeof value === 'number' && !isNaN(value) &&
+        (defaultedOptions.min === null || defaultedOptions.min <= value) &&
+        (defaultedOptions.max === null || defaultedOptions.max >= value) &&
+        (!defaultedOptions.isIntegerOnly || isInteger(value))
+      );
+    }
+  });
+
+  var parameterShape = createParameterShape(parameterOptions);
+
+  return assign(parameterShape, {
+    clampValue: function clampValue(value) {
+      var clampedValue = value;
+
+      if (defaultedOptions.min !== null) {
+        clampedValue = Math.max(defaultedOptions.min, clampedValue);
+      }
+
+      if (defaultedOptions.max !== null) {
+        clampedValue = Math.min(defaultedOptions.max, clampedValue);
+      }
+
+      return clampedValue;
+    }
+  });
+};
+
+var createIntegerParameterShape = function createIntegerParameterShape(options) {
+  return createNumberParameterShape(
+    assign({
+      type: PARAMETER_SHAPE_TYPES.INTEGER,
+      isIntegerOnly: true,
+      defaultValue: 0
+    }, options || {})
+  );
+};
+
+var createRateParameterShape = function createRateParameterShape(options) {
+  return createNumberParameterShape(
+    assign({
+      type: PARAMETER_SHAPE_TYPES.RATE,
+      min: 0.0,
+      defaultValue: 1.0
+    }, options || {})
+  );
+};
+
+var createChanceParameterShape = function createChanceParameterShape(options) {
+  return createNumberParameterShape(
+    assign({
+      type: PARAMETER_SHAPE_TYPES.CHANCE,
+      min: 0.0,
+      max: 1.0,
+      defaultValue: 0.0
+    }, options || {})
+  );
+};
+
+var createBooleanParameterShape = function createBooleanParameterShape(options) {
+  return createParameterShape(
+    assign({
+      type: PARAMETER_SHAPE_TYPES.BOOLEAN,
+      validateValue: function validateValueAsBoolean(value) {
+        return value === true || value === false;
+      },
+      defaultValue: false
+    }, options || {})
+  );
+};
+
+var generatePropertyNames = function generatePropertyNames(parameterName) {
+  var privatePropName = '_' + _s.camelize(parameterName, true);
+  var classifiedPropName = _s.classify(parameterName);
+
+  return {
+    privatePropName: privatePropName,
+    classifiedPropName: classifiedPropName,
+    getterName: 'get' + classifiedPropName,
+    humanizedGetterName: _s.camelize(parameterName, true),
+    rawGetterName: 'getRaw' + classifiedPropName,
+    setterName: 'set' + classifiedPropName,
+    validatorName: 'validate' + classifiedPropName,
+    displayerName: 'display' + classifiedPropName
+  };
+};
+
+/**
+ * @param {Object} obj
+ * @param {string} parameterName
+ * @param {*} defaultValue
+ * @param {Function} validateParameter
+ * @param {Function} displayParameter
+ * @param {(Object|undefined)} options
+ */
+var defineProperties = function defineProperties(
+  obj, parameterName, defaultValue, validateParameter, displayParameter, options
+) {
+  var defaultedOptions = assign({
+    isEnabledHumanizedGetter: true
+  }, options || {});
+
+  var propNames = generatePropertyNames(parameterName);
+
   //
-  // NOTE:
-  //
-  // Can not use Object.definePeoperty,
-  //   because defined getter/setter can not mix-in other object.
-  // I want to use like the following:
-  //
-  // ```
-  // var parameters = {};
-  // defineParameter(parameters, 'maxHp');
-  // defineParameter(parameters, 'attack');
-  // defineParameter(parameters, 'defense');
-  //
-  // var creature = {};
-  // mixin(creature, mixin);
-  // var skill = {};
-  // mixin(skill, mixin);
-  // var equipment = {};
-  // mixin(equipment, mixin);
-  // ```
+  // NOTE: Can not use `Object.definePeoperty`,
+  //         because defined accessors can not mix-in other object.
   //
 
-  // getRawMaxHp
-  obj['getRaw' + classifiedPropName] = function getRaw() {
-    return this[privatePropName];
+  obj[propNames.rawGetterName] = function getRawParameterValue() {
+    return this[propNames.privatePropName];
   };
 
-  // getMaxHp (or isFooBar or canFooBar etc)
-  obj[getterName] = function get() {
-    return this['getRaw' + classifiedPropName]();
+  obj[propNames.getterName] = function getParameterValue() {
+    return this[propNames.rawGetterName]();
   };
 
-  // setMaxHp
-  obj['set' + classifiedPropName] = function set(value) {
-    if (!options.validate(value)) {
+  if (
+    defaultedOptions.isEnabledHumanizedGetter &&
+    /^(is|has|can|should|will)/.test(parameterName)
+  ) {
+    obj[propNames.humanizedGetterName] = obj[propNames.getterName];
+  }
+
+  obj[propNames.setterName] = function setParameterValue(value) {
+    if (!validateParameter(value)) {
       throw new Error('`' + value + '` is invalid parameter');
     }
-    this[privatePropName] = value;
+    this[propNames.privatePropName] = value;
   };
 
-  // validateMaxHp
-  obj['validate' + classifiedPropName] = options.validate;
+  obj[propNames.validatorName] = validateParameter;
 
-  // displayMaxHp
-  obj['display' + classifiedPropName] = function display() {
-    return options.format(this[getterName]());
+  obj[propNames.displayerName] = function displayParameterValue() {
+    return displayParameter(obj[propNames.getterName]());
   };
 
   // set default value with validation
-  obj['set' + classifiedPropName](defaultValue);
+  obj[propNames.setterName](defaultValue);
+};
+
+var defineParameterViaShape = function defineParameterViaShape(obj, parameterName, shape, options) {
+  var definitionOptions = utils.pickKeys(options || {}, ['isEnabledHumanizedGetter']);
+
+  defineProperties(
+    obj,
+    parameterName,
+    shape.defaultValue,
+    shape.validateValue,
+    shape.displayValue,
+    definitionOptions
+  );
+};
+
+var defineParameter = function defineParameter(obj, parameterName, options) {
+  var shape = createParameterShape(options);
+  defineParameterViaShape(obj, parameterName, shape, options);
 };
 
 var defineNumberParameter = function defineNumberParameter(obj, parameterName, options) {
-  options = assign({
-    default: 0.0,
-    min: null,
-    max: null,
-    isIntegerOnly: false
-  }, options || {});
-
-  var customOptionKeys = ['default', 'min', 'max', 'isIntegerOnly'];
-  var customOptions = utils.pickKeys(options, customOptionKeys);
-  options = utils.omitKeys(options, customOptionKeys);
-
-  options.validate = function validate(value) {
-    return (
-      typeof value === 'number' && !isNaN(value) &&
-      (customOptions.min === null || customOptions.min <= value) &&
-      (customOptions.max === null || customOptions.max >= value) &&
-      (!customOptions.isIntegerOnly || isInteger(value))
-    );
-  };
-
-  defineParameter(obj, parameterName, customOptions.default, options);
+  var shape = createNumberParameterShape(options);
+  defineParameterViaShape(obj, parameterName, shape, options);
 };
 
 var defineIntegerParameter = function defineIntegerParameter(obj, parameterName, options) {
-  defineNumberParameter(obj, parameterName, assign({}, options, { isIntegerOnly: true }));
+  var shape = createIntegerParameterShape(options);
+  defineParameterViaShape(obj, parameterName, shape, options);
 };
 
 var defineRateParameter = function defineRateParameter(obj, parameterName, options) {
-  options = assign({
-    default: 1.0
-  }, options || {}, {
-    min: 0.0
-  });
-  defineNumberParameter(obj, parameterName, options);
+  var shape = createRateParameterShape(options);
+  defineParameterViaShape(obj, parameterName, shape, options);
 };
 
 var defineChanceParameter = function defineChanceParameter(obj, parameterName, options) {
-  options = assign({
-    default: 0.0,
-  }, options || {}, {
-    min: 0.0,
-    max: 1.0
-  });
-  defineNumberParameter(obj, parameterName, options);
+  var shape = createChanceParameterShape(options);
+  defineParameterViaShape(obj, parameterName, shape, options);
 };
 
 var defineBooleanParameter = function defineBooleanParameter(obj, parameterName, options) {
-  options = assign({
-    default: false
-  }, options || {});
-
-  var customOptionKeys = ['default'];
-  var customOptions = utils.pickKeys(options, customOptionKeys);
-  options = utils.omitKeys(options, customOptionKeys);
-
-  options.validate = function validate(value) {
-    return value === true || value === false;
-  };
-
-  defineParameter(obj, parameterName, customOptions.default, options);
+  var shape = createBooleanParameterShape(options);
+  defineParameterViaShape(obj, parameterName, shape, options);
 };
 
 
 module.exports = {
-  defineParameter: defineParameter,
-  defineNumberParameter: defineNumberParameter,
-  defineIntegerParameter: defineIntegerParameter,
-  defineRateParameter: defineRateParameter,
-  defineChanceParameter: defineChanceParameter,
+  PARAMETER_SHAPE_TYPES: PARAMETER_SHAPE_TYPES,
+  aggregators: aggregators,
+  createBooleanParameterShape: createBooleanParameterShape,
+  createChanceParameterShape: createChanceParameterShape,
+  createIntegerParameterShape: createIntegerParameterShape,
+  createNumberParameterShape: createNumberParameterShape,
+  createRateParameterShape: createRateParameterShape,
+  createParameterShape: createParameterShape,
   defineBooleanParameter: defineBooleanParameter,
-  aggregators: aggregators
+  defineChanceParameter: defineChanceParameter,
+  defineIntegerParameter: defineIntegerParameter,
+  defineNumberParameter: defineNumberParameter,
+  defineParameter: defineParameter,
+  defineRateParameter: defineRateParameter,
+  generatePropertyNames: generatePropertyNames
 };
