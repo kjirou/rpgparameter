@@ -1,121 +1,121 @@
 #!/usr/bin/env node
 
-var assert = require('assert');
-var util = require('util');
+const assert = require('assert');
 
-var rpgparameters = require('../index');
-var aggregators = rpgparameters.aggregators;
-
-
-var ParametersMixin = {};
-rpgparameters.defineRateParameter(ParametersMixin, 'maxHpRate');
-rpgparameters.defineNumberParameter(ParametersMixin, 'attackPower');
-rpgparameters.defineChanceParameter(ParametersMixin, 'guardChance');
+const rpgparameters = require('../index');
+const aggregators = rpgparameters.aggregators;
 
 
-// skill
-var Skill = function() {};
-Object.assign(Skill.prototype, ParametersMixin);
-
-var AttackUpSkill = function() {
-  Skill.apply(this);
-  this._attackPower = 5;
-};
-util.inherits(AttackUpSkill, Skill);
-
-// equipment
-var Equipment = function Equipment() {};
-Object.assign(Equipment.prototype, ParametersMixin);
-
-var ShieldEquipment = function() {
-  Equipment.apply(this);
-  this._guardChance = 0.25;
-};
-util.inherits(ShieldEquipment, Equipment);
-
-// buff
-var Buff = function Buff() {};
-Object.assign(Buff.prototype, ParametersMixin);
-
-var BerserkBuff = function() {
-  Buff.apply(this);
-  this._maxHpRate = 1.5;
-  this._attackPower = 8;
-};
-util.inherits(BerserkBuff, Buff);
-
-// creature
-var Creature = function() {
-  this._skill = null;
-  this._equipment = null;
-  this._buff = null;
-};
-Object.assign(Creature.prototype, ParametersMixin);
-
-Creature.prototype.getMaxHpRate = function() {
-  var parameters = [this.getRawMaxHpRate()];
-  [
-    this._skill, this._equipment, this._buff
-  ].filter(function(v) {
-    return !!v;
-  }).forEach(function(v) {
-    parameters.push(v.getMaxHpRate());
-  });
-  return aggregators.aggregateRates(parameters);
-};
-
-Creature.prototype.getAttackPower = function() {
-  var parameters = [this.getRawAttackPower()];
-  [
-    this._skill, this._equipment, this._buff
-  ].filter(function(v) {
-    return !!v;
-  }).forEach(function(v) {
-    parameters.push(v.getAttackPower());
-  });
-  return aggregators.aggregateNumbers(parameters);
-};
-
-Creature.prototype.getGuardChance = function() {
-  var parameters = [this.getRawGuardChance()];
-  [
-    this._skill, this._equipment, this._buff
-  ].filter(function(v) {
-    return !!v;
-  }).forEach(function(v) {
-    parameters.push(v.getGuardChance());
-  });
-  return aggregators.aggregateChances(parameters);
-};
-
-var HumanCreature = function() {
-  Creature.apply(this);
-  this._maxHpRate = 1.0;
-  this._attackPower = 3;
-  this._guardChance = 0.0;
-};
-util.inherits(HumanCreature, Creature);
+const parametersMixin = {};
+rpgparameters.defineRateParameter(parametersMixin, 'maxHpRate');
+rpgparameters.defineNumberParameter(parametersMixin, 'attackPower');
+rpgparameters.defineChanceParameter(parametersMixin, 'guardChance');
 
 
-// human being
-var human = new HumanCreature();
+class Skill {}
+Object.assign(Skill.prototype, parametersMixin);
+
+class AttackUpSkill extends Skill {
+  constructor() {
+    super();
+    this._attackPower = 5;
+  }
+}
+
+
+class Equipment {}
+Object.assign(Equipment.prototype, parametersMixin);
+
+class ShieldEquipment extends Equipment {
+  constructor() {
+    super();
+    this._guardChance = 0.25;
+  }
+}
+
+
+class Buff {}
+Object.assign(Buff.prototype, parametersMixin);
+
+class BerserkBuff extends Equipment {
+  constructor() {
+    super();
+    this._maxHpRate = 1.5;
+    this._attackPower = 8;
+  }
+}
+
+
+class PrototypeCreature {}
+Object.assign(PrototypeCreature.prototype, parametersMixin);
+
+class Creature extends PrototypeCreature {
+  constructor() {
+    super();
+    this._skill = null;
+    this._equipment = null;
+    this._buff = null;
+  }
+
+  _getParameterModifiers() {
+    const mods = [];
+    if (this._skill) mods.push(this._skill);
+    if (this._equipment) mods.push(this._equipment);
+    if (this._buff) mods.push(this._buff);
+    return mods;
+  }
+
+  getMaxHpRate() {
+    return aggregators.aggregateRates([
+      PrototypeCreature.prototype.getMaxHpRate.apply(this),
+      ...this._getParameterModifiers().map(m => m.getMaxHpRate()),
+    ]);
+  }
+
+  getAttackPower() {
+    return aggregators.aggregateNumbers([
+      PrototypeCreature.prototype.getAttackPower.apply(this),
+      ...this._getParameterModifiers().map(m => m.getAttackPower()),
+    ]);
+  }
+
+  getGuardChance() {
+    return aggregators.aggregateChances([
+      PrototypeCreature.prototype.getGuardChance.apply(this),
+      ...this._getParameterModifiers().map(m => m.getGuardChance()),
+    ]);
+  }
+}
+
+class HumanCreature extends Creature {
+  constructor() {
+    super();
+    this._maxHpRate = 1.0;
+    this._attackPower = 3;
+    this._guardChance = 0.0;
+  }
+}
+
+
+// A human being
+const human = new HumanCreature();
 assert.strictEqual(human.getMaxHpRate(), 1.0);
 assert.strictEqual(human.getAttackPower(), 3);
 assert.strictEqual(human.getGuardChance(), 0.0);
 
-// human gets a skill
+// The human gets a skill
 human._skill = new AttackUpSkill();
 assert.strictEqual(human.getMaxHpRate(), 1.0);
 assert.strictEqual(human.getAttackPower(), 8);  // 3(base) + 5(skill)
 assert.strictEqual(human.getGuardChance(), 0.0);
 
-// human gets a equipment
+// The human gets an equipment
 human._equipment = new ShieldEquipment();
 assert.strictEqual(human.getMaxHpRate(), 1.0);
 assert.strictEqual(human.getAttackPower(), 8);  // 3(base) + 5(skill)
 assert.strictEqual(human.getGuardChance(), 0.25);  // 0.25(equipment)
 
-// human is enchanced by buff
+// The human is enchanced by a buff
 human._buff = new BerserkBuff();
 assert.strictEqual(human.getMaxHpRate(), 1.5);  // 1(base) * 1.5(buff)
 assert.strictEqual(human.getAttackPower(), 16);  // 3(base) + 5(skill) + 8(buff)
