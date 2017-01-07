@@ -10,7 +10,7 @@ var utils = require('./lib/utils');
  * @param {object} obj
  * @param {string} parameterName
  * @param {any} defaultValue
- * @param {object|undefined} options
+ * @param {(object|undefined)} options
  */
 var defineParameter = function defineParameter(obj, parameterName, defaultValue, options) {
   options = assign({
